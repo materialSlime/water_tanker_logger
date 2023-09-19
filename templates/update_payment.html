@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+
+{% include "header.html" %}
+
+<h2>Payment Update Form</h2>
+<div class="content">
+    <form action="{{ url_for('update_pay_info_page') }}" method="POST">
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required list="regular_customers">
+        <datalist id="regular_customers">
+            <option value="Brijpal">
+            <option value="Imrat">
+            <option value="Jain">
+        </datalist>
+        <br><br>
+
+        <label for="payment_mode">Payment Mode:</label>
+        <select id="payment_mode" name="payment_mode" required >
+            <option value="Credit Card">Credit Card</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Cash" selected >Cash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="UPI">UPI</option>
+            <option value="Other">Other</option>
+        </select><br><br>
+
+        <label for="amount">Amount (Rs.):</label>
+        <input type="number" id="amount" name="paid_amount" step="1" required ><br><br>
+
+        <input name="update" type="submit" value="Update">
+    </form>
+
+    {% if update_succeed == True %}
+        <h2>Payment Recorded in updated logs.</h2>
+    {% endif %}
+
+</div>
+
+{% include "footer.html" %}
+
+</body>
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Update Payment Info</title>
+        <link rel="stylesheet" href="static/styles.css">
+    </head>
+</html>
+

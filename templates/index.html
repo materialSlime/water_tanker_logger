@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tanker Logger</title>
+        <link rel="stylesheet" href="static/styles.css">
+    </head>
+    <body>
+
+        {% include "header.html" %}
+
+        <div class="content">
+            <h1>Tanker Logs Manager</h1>
+            <a class="entry button" href="{{ url_for('entry_page') }}">Entry</a>
+            <a class="retrieve button" href="{{ url_for('retrieve_page') }}">Retrieve</a>
+            <a class="update button" href="{{ url_for('update_pay_info_page') }}">Update Payment Info</a>
+        </div>
+
+        <div>
+            {% if not log_table.empty %}
+                {{log_table.to_html(index=False) | safe}}
+            {% endif %}
+        </div>
+
+
+        {% include "footer.html" %}
+
+    </body>
+</html>
+

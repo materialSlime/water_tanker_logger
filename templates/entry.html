@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Water Tanker Entry</title>
+        <link rel="stylesheet" href="static/styles.css">
+    </head>
+    <body>
+
+        {% include "header.html" %}
+
+        <div class="content">
+
+            <h2>Water Tanker Entry Form</h2>
+            {% if entry_status_content %}
+                <h4 class="entry_status_content">Entered information has been logged </h4>
+            {% endif %}
+
+            <form action="{{ url_for('entry_page') }}" method="POST">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required list="regular_customers">
+                <datalist id="regular_customers">
+                    <option value="Brijpal">
+                    <option value="Imrat">
+                    <option value="Jain">
+                </datalist>
+                <br><br>
+
+                <label for="date">Date:</label>
+                <input type="date" id="date" name="date" required value="{{today_date}}"><br><br>
+
+                <label for="time">Time:</label>
+                <input type="time" id="time" name="time" required><br><br>
+
+                <label for="payment_mode">Payment Mode:</label>
+                <select id="payment_mode" name="payment_mode" required value="">
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="Debit Card">Debit Card</option>
+                    <option value="Cash" selected>Cash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Other">Other</option>
+                </select><br><br>
+
+                <label for="payment_status">Payment Status:</label>
+                <input type="radio" id="payment_status_paid" name="payment_status" value="Paid" required>
+                <label for="payment_status_paid">Paid</label>
+                <input type="radio" id="payment_status_pending" name="payment_status" value="Pending" required checked>
+                <label for="payment_status_pending">Pending</label><br><br>
+
+                <label for="amount">Amount (Rs.):</label>
+                <input type="number" id="amount" name="amount" step="0.01" required value="70"><br><br>
+
+                <label for="note">Note:</label><br>
+                <textarea id="note" name="note" rows="4" cols="50"></textarea><br><br>
+
+                <input name="submit" type="submit" value="Submit">
+            </form>
+        </div>
+
+
+
+        <div class="last_entry">
+            {% if not last_log.empty %}
+                <h2>Last Entry Below</h2>
+                {{last_log.to_html(index=False) | safe}}
+                <form class="non-form" action="{{url_for('entry_page')}}" method="POST">
+                    <button name="delete_btn" value="delete_btn" class="remove_last_entry" >Delete Entry</button>
+                </form>
+            {% endif%}
+
+        </div>
+
+        {% include "footer.html" %}
+
+    </body>
+</html>

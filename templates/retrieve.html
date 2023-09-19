@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Retrieve Tanker Logs</title>
+        <link rel="stylesheet" href="static/styles.css">
+    </head>
+    <body>
+
+        {% include "header.html" %}
+
+        <div class="content">
+            <h1>Retrieve Tanker Logs</h1>
+            <form method="post" id="retrieveForm">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required><br><br>
+
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" required><br><br>
+
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" name="endDate" required><br><br>
+
+                <input class="button" name="submit" value="Submit" type="submit">
+                <input class="today_btn button" formnovalidate name="logs_today" value="Retrieve Today's Log" type="submit">
+            </form>
+        </div>
+        <div id="response">
+            {% if data_table_bool %}
+                {% if not data_table.empty %}
+                    <h3>Here is the Query Result</h3>
+                    {{data_table.to_html(index=False) | safe}}
+                    <h4 class="tanker_total">Total Tanker Count = {{data_table.shape[0]}}</h4>
+                    <h4 class="tanker_total">Total Amount to get paid for pending payments = {{amount_sum}}</h4>
+                {% else %}
+                    <h3>No Data to show.</h3>
+                {% endif%}
+            {% else %}
+                <h3>No Data to show.</h3>
+            {% endif %}
+        </div>
+
+        {% include "footer.html" %}
+
+    </body>
+</html>
