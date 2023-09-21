@@ -25,6 +25,15 @@
                 <input class="button" name="submit" value="Submit" type="submit">
                 <input class="today_btn button" formnovalidate name="logs_today" value="Retrieve Today's Log" type="submit">
             </form>
+
+            <h1>Retrieve by Date</h1>
+            <form method="post">
+                <label for="specified-date">Date:</label>
+                <input type="date" id="specified-date" name="specified-date" required><br><br>
+                <input class="today_btn button" name="logs_by_date" value="Retrieve by Date" type="submit">
+            </form>
+
+
         </div>
         <div id="response">
             {% if data_table_bool %}
