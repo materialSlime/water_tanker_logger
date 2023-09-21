@@ -109,6 +109,12 @@ def retrieve_page():
             return render_template("retrieve.html", footer_cpr_year=current_year,
                                    data_table=in_range, data_table_bool=True, amount_sum=get_amount_sum(in_range))
 
+
+
+
+
+
+
         if request.form.get('logs_today') == "Retrieve Today's Log":
             data = pd.read_csv('./logs.csv')
             today = datetime.now().strftime("%Y-%m-%d")
