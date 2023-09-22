@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<body>
+{% extends "base.html" %}
 
-{% include "header.html" %}
+{% block title %} Water Tanker-Payment {% endblock %}
+
+{% block content %}
 
 <h2>Payment Update Form</h2>
 <div class="content">
@@ -39,14 +39,5 @@
 
 </div>
 
-{% include "footer.html" %}
-
-</body>
-<head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Update Payment Info</title>
-        <link rel="stylesheet" href="static/styles.css">
-    </head>
-</html>
+{% endblock %}
 

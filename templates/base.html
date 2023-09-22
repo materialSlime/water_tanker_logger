@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>
+            {% block title %}
+                Title
+            {% endblock %}
+        </title>
+        <link rel="stylesheet" href="static/styles.css">
+    </head>
+    <body>
+
+        <div class="nav_bar">
+            <a class="home_btn" href="{{url_for('home')}}">Home</a>
+            <a class="log_data_btn" href="{{url_for('entry_page')}}">Log Data</a>
+            <a class="retrieve_data" href="{{url_for('retrieve_page')}}"> Retrieve Data </a>
+        </div>
+
+        {% block content %}
+        {% endblock %}
+
+        <footer>
+            <p>Copyright({{ footer_cpr_year }})</p>
+        </footer>
+    </body>
+</html>
