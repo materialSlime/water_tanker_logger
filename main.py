@@ -90,8 +90,10 @@ def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
     try:
         default_date = tanker_logs.tail(1)['Date'].item()
+        last_time = tanker_logs.tail(1)["Time"].item()
     except:
         default_date = None
+        last_time = None
 
     entry_status = False
 
@@ -116,7 +118,8 @@ def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
     last_row = tanker_logs.tail(1)
     return render_template("entry.html", footer_cpr_year=current_year,
-                           entry_status_content=entry_status, default_date=default_date, last_log=last_row)
+                           entry_status_content=entry_status, default_date=default_date,
+                           last_time=last_time, last_log=last_row)
 
 
 @app.route("/retrieve", methods=["GET", "POST"])
