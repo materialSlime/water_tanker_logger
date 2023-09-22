@@ -71,7 +71,7 @@ def home():
 @app.route("/entry", methods=["POST", "GET"])
 def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
-    today = datetime.now().date().strftime('%Y-%m-%d')
+    default_date = tanker_logs.tail(1)['Date'].item()
     entry_status = False
 
     if request.method == "POST":
@@ -95,7 +95,7 @@ def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
     last_row = tanker_logs.tail(1)
     return render_template("entry.html", footer_cpr_year=current_year,
-                           entry_status_content=entry_status, today_date=today, last_log=last_row)
+                           entry_status_content=entry_status, default_date=default_date, last_log=last_row)
 
 
 @app.route("/retrieve", methods=["GET", "POST"])
