@@ -1,11 +1,7 @@
 #folders
 venv
 .idea
-
-*.csv
 __pychache__
 
 #logs
-hellothere.txt
-hellothereagain.txt
 logs.csv

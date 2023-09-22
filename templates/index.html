@@ -11,10 +11,6 @@
     <a class="update button" href="{{ url_for('update_pay_info_page') }}">Update Payment Info</a>
 </div>
 
-<div>
-    {% if not log_table.empty %}
-        {{log_table.to_html(index=False) | safe}}
-    {% endif %}
-</div>
+{% include "table.html" %}
 
 {% endblock %}

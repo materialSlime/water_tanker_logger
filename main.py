@@ -65,7 +65,7 @@ def update_dataframe(name, amt):
 @app.route("/")
 def home():
     data = pd.read_csv('./logs.csv')[::-1]
-    return render_template("index.html", footer_cpr_year=current_year, log_table=data)
+    return render_template("index.html", footer_cpr_year=current_year, data_table_bool=True ,data_table=data)
 
 
 @app.route("/entry", methods=["POST", "GET"])
