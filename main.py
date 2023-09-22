@@ -88,7 +88,11 @@ def home():
 @app.route("/entry", methods=["POST", "GET"])
 def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
-    default_date = tanker_logs.tail(1)['Date'].item()
+    try:
+        default_date = tanker_logs.tail(1)['Date'].item()
+    except:
+        default_date = None
+
     entry_status = False
 
     if request.method == "POST":
