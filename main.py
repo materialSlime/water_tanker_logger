@@ -8,6 +8,23 @@ app = Flask(__name__)
 current_year = datetime.now().year
 
 
+def handle_no_file_found():
+    try:
+        data = pd.read_csv('./logs.csv')
+    except FileNotFoundError:
+        with open("./logs.csv", 'a', newline='') as tanker_logs:
+            fieldnames = ['Name', 'Date', 'Time', 'Payment Mode', 'Payment Status', 'Amount (Rs.)', 'Note']
+            writer = csv.DictWriter(tanker_logs, fieldnames=fieldnames)
+
+            if tanker_logs.tell() == 0:
+                writer.writeheader()
+                print("No logs file found, but one is created with with give fieldnames")
+        data = pd.read_csv('./logs.csv')
+
+
+handle_no_file_found()
+
+
 def write_entry_to_file(data):
     with open("./logs.csv", 'a', newline='') as tanker_logs:
         fieldnames = ['Name', 'Date', 'Time', 'Payment Mode', 'Payment Status', 'Amount (Rs.)', 'Note']
@@ -65,7 +82,7 @@ def update_dataframe(name, amt):
 @app.route("/")
 def home():
     data = pd.read_csv('./logs.csv')[::-1]
-    return render_template("index.html", footer_cpr_year=current_year, data_table_bool=True ,data_table=data)
+    return render_template("index.html", footer_cpr_year=current_year, data_table_bool=True, data_table=data)
 
 
 @app.route("/entry", methods=["POST", "GET"])
