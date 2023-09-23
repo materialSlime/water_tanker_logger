@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
 import pandas as pd
 import csv
@@ -163,6 +163,12 @@ def update_pay_info_page():
             return render_template('./update_payment.html', update_succeed=True)
     else:
         return render_template('./update_payment.html')
+
+
+@app.route('/download-logs')
+def download_logs():
+    response = send_file("./logs.csv", as_attachment=True)
+    return response
 
 
 if __name__ == "__main__":
