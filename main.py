@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
 import pandas as pd
 import csv
@@ -47,6 +47,16 @@ def delete_last_entry():
         print("CSV file is empty.")
 
 
+def delete_by_index(index):
+    logs = pd.read_csv('./logs.csv')
+    if not logs.empty:
+        logs = logs.drop(int(index))
+        logs.to_csv("./logs.csv", index=False)
+        print(f"Line with index:{index} is deleted from the CSV file.")
+    else:
+        print("CSV file is empty.")
+
+
 def data_in_range_date(data, start, end):
     start_date = datetime.strptime(start, "%Y-%m-%d")
     end_date = datetime.strptime(end, "%Y-%m-%d")
@@ -79,8 +89,11 @@ def update_dataframe(name, amt):
     df.to_csv('./logs.csv', index=False)
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
+    if request.method == "POST":
+        if request.form.get('table-index'):
+            delete_by_index(request.form.get('table-index'))
     data = pd.read_csv('./logs.csv')[::-1]
     return render_template("index.html", footer_cpr_year=current_year, data_table_bool=True, data_table=data)
 
@@ -90,8 +103,10 @@ def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
     try:
         default_date = tanker_logs.tail(1)['Date'].item()
+        last_time = tanker_logs.tail(1)["Time"].item()
     except:
         default_date = None
+        last_time = None
 
     entry_status = False
 
@@ -116,7 +131,8 @@ def entry_page():
     tanker_logs = pd.read_csv('./logs.csv')
     last_row = tanker_logs.tail(1)
     return render_template("entry.html", footer_cpr_year=current_year,
-                           entry_status_content=entry_status, default_date=default_date, last_log=last_row)
+                           entry_status_content=entry_status, default_date=default_date,
+                           last_time=last_time, last_log=last_row)
 
 
 @app.route("/retrieve", methods=["GET", "POST"])
@@ -160,6 +176,12 @@ def update_pay_info_page():
             return render_template('./update_payment.html', update_succeed=True)
     else:
         return render_template('./update_payment.html')
+
+
+@app.route('/download-logs')
+def download_logs():
+    response = send_file("./logs.csv", as_attachment=True)
+    return response
 
 
 if __name__ == "__main__":

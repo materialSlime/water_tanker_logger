@@ -222,7 +222,10 @@ button:hover {
     color: #007BFF;
 }
 
-/*----- Retrieve Table Styling -----*/
+/*----- Table Styling -----*/
+.table {
+    overflow-x: auto;
+}
 
 table {
     width: 80%;
@@ -247,6 +250,33 @@ tr:nth-child(even) {
     background-color: #F6635C;
 }
 
+.delete-form {
+    display: inline-block;
+    background-color: rgba(0,0,0,0);
+    padding: 0;
+    border: none;
+}
+
+
+tr:nth-child(odd) > td > form > button {
+    background-color: #c23373;
+}
+
+tr:nth-child(even) > td > form > button {
+    background-color: #f6635c;
+}
+
+.delete-btn {
+    display: block;
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 20px;
+}
+
+.delete-btn-svg {
+    fill: white;
+}
 
 @media screen and (max-width: 768px) {
     table {
@@ -258,11 +288,13 @@ tr:nth-child(even) {
         padding: 10px;
     }
 
-    th:last-child, td:last-child {
+    th:nth-child(4),
+    td:nth-child(4) {
         display: none;
         }
 
-    th:nth-child(4), td:nth-child(4) {
+    th:nth-child(7),
+    td:nth-child(7) {
         display: none;
         }
 }

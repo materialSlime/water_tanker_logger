@@ -24,10 +24,10 @@
         <input type="date" id="date" name="date" required value="{{default_date}}"><br><br>
 
         <label for="time">Time:</label>
-        <input type="time" id="time" name="time" required><br><br>
+        <input type="time" id="time" name="time" value="{{last_time}}" required><br><br>
 
         <label for="payment_mode">Payment Mode:</label>
-        <select id="payment_mode" name="payment_mode" required value="">
+        <select id="payment_mode" name="payment_mode" required>
             <option value="Credit Card">Credit Card</option>
             <option value="Debit Card">Debit Card</option>
             <option value="Cash" selected>Cash</option>
@@ -36,7 +36,7 @@
             <option value="Other">Other</option>
         </select><br><br>
 
-        <label for="payment_status">Payment Status:</label>
+        <label for="payment_status_paid">Payment Status:</label>
         <input type="radio" id="payment_status_paid" name="payment_status" value="Paid" required>
         <label for="payment_status_paid">Paid</label>
         <input type="radio" id="payment_status_pending" name="payment_status" value="Pending" required checked>
