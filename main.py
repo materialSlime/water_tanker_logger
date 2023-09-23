@@ -47,6 +47,16 @@ def delete_last_entry():
         print("CSV file is empty.")
 
 
+def delete_by_index(index):
+    logs = pd.read_csv('./logs.csv')
+    if not logs.empty:
+        logs = logs.drop(int(index))
+        logs.to_csv("./logs.csv", index=False)
+        print(f"Line with index:{index} is deleted from the CSV file.")
+    else:
+        print("CSV file is empty.")
+
+
 def data_in_range_date(data, start, end):
     start_date = datetime.strptime(start, "%Y-%m-%d")
     end_date = datetime.strptime(end, "%Y-%m-%d")
@@ -79,8 +89,11 @@ def update_dataframe(name, amt):
     df.to_csv('./logs.csv', index=False)
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
+    if request.method == "POST":
+        if request.form.get('table-index'):
+            delete_by_index(request.form.get('table-index'))
     data = pd.read_csv('./logs.csv')[::-1]
     return render_template("index.html", footer_cpr_year=current_year, data_table_bool=True, data_table=data)
 
