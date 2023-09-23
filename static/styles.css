@@ -223,6 +223,9 @@ button:hover {
 }
 
 /*----- Table Styling -----*/
+.table {
+    overflow-x: auto;
+}
 
 table {
     width: 80%;
@@ -248,8 +251,8 @@ tr:nth-child(even) {
 }
 
 .delete-form {
-    display: inline;
-    background-color: red;
+    display: inline-block;
+    background-color: rgba(0,0,0,0);
     padding: 0;
     border: none;
 }
@@ -264,8 +267,11 @@ tr:nth-child(even) > td > form > button {
 }
 
 .delete-btn {
+    display: block;
     border: none;
     margin: 0;
+    padding: 0;
+    width: 20px;
 }
 
 .delete-btn-svg {
