@@ -8,12 +8,15 @@ user = 'root'
 password = 'bharti'
 port = 3306
 database = "water_tanker_records"
+caution = True
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/')
 df = pd.read_csv('./logs.csv')
 
 # Getting DB ready (DB and tables creation)
 with engine.connect() as conn:
+    if caution:
+        conn.execute(text(f"DROP DATABASE {database};"))
     conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {database};"))
     conn.execute(text(f"USE {database};"))
     for statement in create_required_tables:
@@ -21,44 +24,69 @@ with engine.connect() as conn:
 
 # Importing csv to tables in DB
 # -- customers --
-# for name in df['Name'].unique().tolist():
-#     count = int(df["Name"][df["Name"] == name].count())
-#
-#     params = {
-#         'name': name,
-#         'unit_charge': 70,
-#         'total_units': count,
-#         'balance': 70 * count
-#     }
-#     with engine.connect() as conn:
-#         conn.execute(text(insert_customer), parameters=params)
-#         conn.commit()
-#
-# # # -- records --
-# for index, row in df.iterrows():
-#
-#     params = {
-#         'customer_id': pd.read_sql(f"SELECT customer_id FROM customers "
-#                                    f"WHERE name ='{row['Name']}'", engine)['customer_id'].item(),
-#         'date': row['Date'],
-#         'time': row['Time']
-#     }
-#     with engine.connect() as conn:
-#         conn.execute(text(insert_tanker_record), parameters=params)
-#         conn.commit()
+for name in df['Name'].unique().tolist():
 
-# -- payments --
-for index, row in df.iterrows():
+    count = int(df["Name"][df["Name"] == name].count())
+
+    unit_charge = 100
+    if name in ("Brijpal", "Parvat", "Jain"):
+        unit_charge = 70
+    elif name == "Imrat":
+        unit_charge = 60
 
     params = {
-        'customer_id': pd.read_sql(f"SELECT customer_id FROM customers "
-                                   f"WHERE name ='{row['Name']}';", engine)['customer_id'].item(),
-        'date': row,
-        'paid_amount': int(df[df['Payment Status'] == "Paid"]['Payment Status'].count()) * 70
+        'name': name,
+        'unit_charge': unit_charge,
+        'total_units': count,
+        'balance': 70 * count
     }
+    with engine.connect() as conn:
+        conn.execute(text(insert_customer), parameters=params)
+        conn.commit()
+
+# # -- records --
+for index, row in df.iterrows():
+    params = {
+        'customer_id': pd.read_sql(f"SELECT customer_id FROM customers "
+                                   f"WHERE name ='{row['Name']}'", engine)['customer_id'].item(),
+        'date': row['Date'],
+        'time': row['Time']
+    }
+    with engine.connect() as conn:
+        conn.execute(text(insert_tanker_record), parameters=params)
+        conn.commit()
+
+# -- payments --
+for index, row in pd.read_sql("SELECT * FROM customers;", engine).iterrows():
+    params = {
+        'customer_id': row['customer_id'],
+        'date': "2023-09-30",
+        'paid_amount': int(df[(df['Name'] == row['name']) & (df['Payment Status'] == "Paid")]['Name'].count()) * 70
+    }
+
+    # print(params)
     with engine.connect() as conn:
         conn.execute(text(insert_payment), parameters=params)
         conn.commit()
 
-df_sql = pd.read_sql("SELECT * FROM payments  ", engine)
+# -- adjust balance --
+with engine.connect() as conn:
+    conn.execute(text("""
+        UPDATE customers AS c
+            SET balance =
+                (SELECT paid_amount 
+                 FROM payments AS p
+                 WHERE p.customer_id = c.customer_id) - balance;
+         """))
+    conn.commit()
+
+with engine.connect() as conn:
+    conn.execute(text("""
+        UPDATE customers AS c
+            SET unit_charge = 70
+            WHERE name = "Imrat";
+         """))
+    conn.commit()
+
+df_sql = pd.read_sql("SELECT * FROM customers  ", engine)
 print(df_sql)
