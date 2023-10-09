@@ -50,9 +50,13 @@ update_balance = """
 """
 
 customer_tanker = """
-   SELECT name, date, time
+   SELECT name AS Name, date AS Date, TIME_FORMAT(time,'%h:%i:%s %p') AS Time
     FROM tanker_records AS tf
     JOIN customers AS c
         ON tf.customer_id = c.customer_id
     ORDER BY tf.id DESC;
+"""
+
+drop_tanker_record = """
+    
 """

@@ -37,7 +37,6 @@ def handle_no_file_found():
 
 def insert_tanker_record_to_sql(data):
     with engine.connect() as conn:
-
         customer_details = pd.read_sql(f'SELECT * FROM customers '
                                        f'WHERE name = "{data["Name"]}"', engine)
 
@@ -56,6 +55,20 @@ def insert_tanker_record_to_sql(data):
 
 
 def delete_last_entry():
+    params = {
+        'customer_id': customer_details['customer_id'].item(),
+        'date': data['Date'],
+        'time': data['Time']
+    }
+    customer_params = {
+        "id": customer_details['customer_id'].item(),
+        "amount": f"-{customer_details['unit_charge'].item()}"
+    }
+    with engine.connect() as conn:
+        conn.execute(text(insert_tanker_record), parameters=params)
+        conn.execute(text(update_balance), parameters=customer_params)
+        conn.commit()
+
     logs = pd.read_csv('./logs.csv')
     if not logs.empty:
         logs = logs.iloc[:-1]
@@ -66,6 +79,10 @@ def delete_last_entry():
 
 
 def delete_by_index(index):
+    with engine.connect() as conn:
+        conn.execute()
+        conn.commit()
+
     logs = pd.read_csv('./logs.csv')
     if not logs.empty:
         logs = logs.drop(int(index))
@@ -82,7 +99,7 @@ def data_in_range_date(data, start, end):
     while start_date <= end_date:
         date_range.append(start_date.date())
         start_date += timedelta(days=1)
-    refined = data[data['date'].isin(date_range)]
+    refined = data[data['Date'].isin(date_range)]
 
     return refined
 
@@ -135,6 +152,7 @@ def entry_page():
 def retrieve_page():
     if request.method == "POST":
         in_range = None
+        c_balance = 0
         data = pd.read_sql(text(customer_tanker), engine)
         if request.form.get('logs_by_date') == "Retrieve by Date":
             date = request.form.get('specified-date')
@@ -149,10 +167,14 @@ def retrieve_page():
             start_date = request.form['startDate']
             end_date = request.form['endDate']
             tanker_logs = pd.read_sql(text(customer_tanker), engine)
-            all_matching_names = tanker_logs[tanker_logs['name'] == name]
+            all_matching_names = tanker_logs[tanker_logs['Name'] == name]
             in_range = data_in_range_date(all_matching_names, start_date, end_date)
+
+            c_balance = pd.read_sql(f"SELECT balance FROM customers "
+                                    f"WHERE name = '{name}'", engine)['balance'].item()
+
         return render_template("retrieve.html", footer_cpr_year=current_year,
-                               data_table=in_range, data_table_bool=True)
+                               data_table=in_range, data_table_bool=True, c_balance=c_balance)
     return render_template("retrieve.html", footer_cpr_year=current_year,
                            data_table=None, data_table_bool=False)
 
@@ -161,7 +183,6 @@ def retrieve_page():
 def payment_entry_page():
     if request.method == 'POST':
         if request.form.get('update') == 'Update':
-
             cs_id = pd.read_sql(f"SELECT customer_id FROM customers "
                                 f"WHERE name = '{request.form.get('name')}'", engine)['customer_id'].item()
             payment_params = {
