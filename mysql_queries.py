@@ -42,3 +42,17 @@ insert_payment = """
     INSERT INTO payments (customer_id, date, paid_amount) 
     VALUES (:customer_id, :date, :paid_amount);
 """
+
+update_balance = """
+    UPDATE customers
+    SET balance = balance + :amount
+    WHERE customer_id = :name;
+"""
+
+customer_tanker = """
+   SELECT name, date, time
+    FROM tanker_records AS tf
+    JOIN customers AS c
+        ON tf.customer_id = c.customer_id
+    ORDER BY tf.id DESC;
+"""

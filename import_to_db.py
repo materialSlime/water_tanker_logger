@@ -1,6 +1,6 @@
 from datetime import datetime
-from sqlalchemy import create_engine, text
 import pandas as pd
+from sqlalchemy import create_engine, text
 from mysql_queries import *
 
 host = '127.0.0.1'

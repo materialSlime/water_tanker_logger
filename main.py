@@ -1,11 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
+from sqlalchemy import create_engine, text
 import pandas as pd
 import csv
+from mysql_queries import *
 
-app = Flask(__name__)
-
+host = '127.0.0.1'
+user = 'root'
+password = 'bharti'
+port = 3306
+database = "water_tanker_records"
 current_year = datetime.now().year
+
+engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}')
+
+df = pd.read_sql(text(customer_tanker), engine)
+app = Flask(__name__)
 
 
 def handle_no_file_found():
@@ -22,19 +32,28 @@ def handle_no_file_found():
         data = pd.read_csv('./logs.csv')
 
 
-handle_no_file_found()
+# handle_no_file_found()
 
 
-def write_entry_to_file(data):
-    with open("./logs.csv", 'a', newline='') as tanker_logs:
-        fieldnames = ['Name', 'Date', 'Time', 'Payment Mode', 'Payment Status', 'Amount (Rs.)', 'Note']
-        writer = csv.DictWriter(tanker_logs, fieldnames=fieldnames)
+def insert_tanker_record_to_sql(data):
+    with engine.connect() as conn:
 
-        if tanker_logs.tell() == 0:
-            writer.writeheader()
-            writer.writerow(data)
-        else:
-            writer.writerow(data)
+        customer_details = pd.read_sql(f'SELECT customer_id FROM customers '
+                                       f'WHERE name = "{data["Name"]}"', engine)
+
+        params = {
+            'customer_id': customer_details['customer_id'].item(),
+            'date': data['Date'],
+            'time': data['Time']
+        }
+
+        customer_params = {
+            "amount": customer_details['customer_id'].item(),
+            "name": data["Name"]
+        }
+        conn.execute(text(insert_tanker_record), parameters=params)
+        conn.execute(text(update_balance), parameters=customer_params)
+        conn.commit()
 
 
 def delete_last_entry():
@@ -62,31 +81,11 @@ def data_in_range_date(data, start, end):
     end_date = datetime.strptime(end, "%Y-%m-%d")
     date_range = []
     while start_date <= end_date:
-        date_range.append(start_date.strftime("%Y-%m-%d"))
+        date_range.append(start_date.date())
         start_date += timedelta(days=1)
-
-    refined = data[data['Date'].isin(date_range)]
+    refined = data[data['date'].isin(date_range)]
 
     return refined
-
-
-def get_amount_sum(data):
-    all_pending_payments = data[data["Payment Status"] == "Pending"]
-    return all_pending_payments["Amount (Rs.)"].sum()
-
-
-def update_dataframe(name, amt):
-    df = pd.read_csv('./logs.csv')
-    filtered = df[(df['Name'] == name) & (df["Payment Status"] == "Pending")]
-
-    for index, row in filtered.iterrows():
-
-        if amt >= row['Amount (Rs.)']:
-            df.at[index, 'Payment Status'] = 'Paid'
-            amt -= row['Amount (Rs.)']
-        print("Updating")
-
-    df.to_csv('./logs.csv', index=False)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -94,18 +93,19 @@ def home():
     if request.method == "POST":
         if request.form.get('table-index'):
             delete_by_index(request.form.get('table-index'))
-    data = pd.read_csv('./logs.csv')[::-1]
-    return render_template("index.html", footer_cpr_year=current_year, data_table_bool=True, data_table=data)
+    data = pd.read_sql(text(customer_tanker), engine)
+    return render_template("index.html", footer_cpr_year=current_year,
+                           data_table_bool=True, data_table=data)
 
 
 @app.route("/entry", methods=["POST", "GET"])
 def entry_page():
-    tanker_logs = pd.read_csv('./logs.csv')
+    tanker_logs = pd.read_sql(text(customer_tanker), engine)
     try:
-        default_date = tanker_logs.tail(1)['Date'].item()
-        last_time = tanker_logs.tail(1)["Time"].item()
+        last_date = tanker_logs.tail(1)['date'].item()
+        last_time = tanker_logs.tail(1)["time"].item()
     except:
-        default_date = None
+        last_date = None
         last_time = None
 
     entry_status = False
@@ -119,63 +119,72 @@ def entry_page():
             form_data = {
                 'Name': request.form['name'],
                 'Date': request.form['date'],
-                'Time': request.form['time'],
-                'Payment Mode': request.form['payment_mode'],
-                'Payment Status': request.form['payment_status'],
-                'Amount (Rs.)': request.form['amount'],
-                'Note': request.form['note']
+                'Time': request.form['time']
             }
             entry_status = True
-            write_entry_to_file(form_data)
+            insert_tanker_record_to_sql(form_data)
 
-    tanker_logs = pd.read_csv('./logs.csv')
-    last_row = tanker_logs.tail(1)
+    tanker_logs = pd.read_sql(text(customer_tanker), engine)
+    latest_row = tanker_logs.head(1)
+
     return render_template("entry.html", footer_cpr_year=current_year,
-                           entry_status_content=entry_status, default_date=default_date,
-                           last_time=last_time, last_log=last_row)
+                           entry_status_content=entry_status, default_date=last_date,
+                           last_time=last_time, last_log=latest_row)
 
 
 @app.route("/retrieve", methods=["GET", "POST"])
 def retrieve_page():
     if request.method == "POST":
+        in_range = None
+        data = pd.read_sql(text(customer_tanker), engine)
         if request.form.get('logs_by_date') == "Retrieve by Date":
-            data = pd.read_csv('./logs.csv')
             date = request.form.get('specified-date')
             in_range = data_in_range_date(data, date, date)
-            return render_template("retrieve.html", footer_cpr_year=current_year,
-                                   data_table=in_range, data_table_bool=True, amount_sum=get_amount_sum(in_range))
 
         if request.form.get('logs_today') == "Retrieve Today's Log":
-            data = pd.read_csv('./logs.csv')
             today = datetime.now().strftime("%Y-%m-%d")
             in_range = data_in_range_date(data, today, today)
-            return render_template("retrieve.html", footer_cpr_year=current_year,
-                                   data_table=in_range, data_table_bool=True, amount_sum=get_amount_sum(in_range))
 
         elif request.form.get('submit') == "Submit":
             name = request.form['name']
             start_date = request.form['startDate']
             end_date = request.form['endDate']
-            tanker_logs = pd.read_csv('./logs.csv')
-            all_matching_names = tanker_logs[tanker_logs['Name'] == name]
+            tanker_logs = pd.read_sql(text(customer_tanker), engine)
+            all_matching_names = tanker_logs[tanker_logs['name'] == name]
             in_range = data_in_range_date(all_matching_names, start_date, end_date)
-            return render_template("retrieve.html", footer_cpr_year=current_year,
-                                   data_table=in_range, data_table_bool=True, amount_sum=get_amount_sum(in_range))
+        return render_template("retrieve.html", footer_cpr_year=current_year,
+                               data_table=in_range, data_table_bool=True)
     return render_template("retrieve.html", footer_cpr_year=current_year,
                            data_table=None, data_table_bool=False)
 
 
 @app.route("/update-pay-info", methods=["GET", "POST"])
-def update_pay_info_page():
+def payment_entry_page():
     if request.method == 'POST':
         if request.form.get('update') == 'Update':
-            name = request.form.get('name')
-            paid_amt = request.form.get('paid_amount')
-            mode = request.form.get('payment_mode')
-            update_dataframe(name, int(paid_amt))
-            return render_template('./update_payment.html', update_succeed=True)
+
+            cs_id = pd.read_sql(f"SELECT customer_id FROM customers "
+                                f"WHERE name = '{request.form.get('name')}'", engine)['customer_id'].item()
+            payment_params = {
+                "customer_id": cs_id,
+                "date": datetime.now().date(),
+                "paid_amount": request.form.get('paid_amount')
+                # "mode" : request.form.get('payment_mode')
+            }
+
+            customer_params = {
+                "name": cs_id,
+                "amount": request.form.get('paid_amount')
+            }
+
+            with engine.connect() as conn:
+                conn.execute(text(insert_payment), parameters=payment_params)
+                conn.execute(text(update_balance), parameters=customer_params)
+                conn.commit()
+
+            return render_template('./payment_entry.html', update_succeed=True)
     else:
-        return render_template('./update_payment.html')
+        return render_template('./payment_entry.html')
 
 
 @app.route('/download-logs')
