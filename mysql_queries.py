@@ -46,7 +46,7 @@ insert_payment = """
 update_balance = """
     UPDATE customers
     SET balance = balance + :amount
-    WHERE customer_id = :name;
+    WHERE customer_id = :id;
 """
 
 customer_tanker = """

@@ -38,7 +38,7 @@ def handle_no_file_found():
 def insert_tanker_record_to_sql(data):
     with engine.connect() as conn:
 
-        customer_details = pd.read_sql(f'SELECT customer_id FROM customers '
+        customer_details = pd.read_sql(f'SELECT * FROM customers '
                                        f'WHERE name = "{data["Name"]}"', engine)
 
         params = {
@@ -46,10 +46,9 @@ def insert_tanker_record_to_sql(data):
             'date': data['Date'],
             'time': data['Time']
         }
-
         customer_params = {
-            "amount": customer_details['customer_id'].item(),
-            "name": data["Name"]
+            "id": customer_details['customer_id'].item(),
+            "amount": f"-{customer_details['unit_charge'].item()}"
         }
         conn.execute(text(insert_tanker_record), parameters=params)
         conn.execute(text(update_balance), parameters=customer_params)
@@ -173,7 +172,7 @@ def payment_entry_page():
             }
 
             customer_params = {
-                "name": cs_id,
+                "id": cs_id,
                 "amount": request.form.get('paid_amount')
             }
 
