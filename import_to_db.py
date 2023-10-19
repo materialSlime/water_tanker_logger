@@ -3,20 +3,18 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from mysql_queries import *
 
-host = '127.0.0.1'
-user = 'root'
-password = 'bharti'
+host = 'sql12.freemysqlhosting.net'
+user = 'sql12654547'
+password = 'Nt6PqNw1Cd'
 port = 3306
-database = "water_tanker_records"
-caution = True
+database = "sql12654547"
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/')
 df = pd.read_csv('./logs.csv')
 
 # Getting DB ready (DB and tables creation)
 with engine.connect() as conn:
-    if caution:
-        conn.execute(text(f"DROP DATABASE {database};"))
+    conn.execute(text(f"DROP DATABASE {database};"))
     conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {database};"))
     conn.execute(text(f"USE {database};"))
     for statement in create_required_tables:
@@ -74,7 +72,7 @@ with engine.connect() as conn:
     conn.execute(text("""
         UPDATE customers AS c
             SET balance =
-                (SELECT paid_amount 
+                (SELECT paid_amount
                  FROM payments AS p
                  WHERE p.customer_id = c.customer_id) - balance;
          """))

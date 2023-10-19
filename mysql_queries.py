@@ -56,7 +56,3 @@ customer_tanker = """
         ON tf.customer_id = c.customer_id
     ORDER BY tf.id DESC;
 """
-
-drop_tanker_record = """
-    
-"""

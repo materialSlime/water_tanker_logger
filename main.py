@@ -5,11 +5,11 @@ import pandas as pd
 import csv
 from mysql_queries import *
 
-host = '127.0.0.1'
-user = 'root'
-password = 'bharti'
+host = 'sql12.freemysqlhosting.net'
+user = 'sql12654547'
+password = 'Nt6PqNw1Cd'
 port = 3306
-database = "water_tanker_records"
+database = "sql12654547"
 current_year = datetime.now().year
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}')
@@ -209,7 +209,10 @@ def payment_entry_page():
 
 @app.route('/download-logs')
 def download_logs():
-    response = send_file("./logs.csv", as_attachment=True)
+    df_sql = pd.read_sql(text(customer_tanker), engine)
+    df_sql.to_csv("./records.csv")
+    response = send_file("./records.csv", as_attachment=True)
+
     return response
 
 
