@@ -80,14 +80,14 @@ def delete_last_entry():
 
 def delete_by_index(index):
     with engine.connect() as conn:
-        conn.execute()
+        conn.execute(text(f"DELETE FROM `sql12654547`.`tanker_records` WHERE (`id` = '{}');"))
         conn.commit()
 
     logs = pd.read_csv('./logs.csv')
     if not logs.empty:
         logs = logs.drop(int(index))
         logs.to_csv("./logs.csv", index=False)
-        print(f"Line with index:{index} is deleted from the CSV file.")
+        print(f"Row with index:{index} is deleted from the CSV file.")
     else:
         print("CSV file is empty.")
 
