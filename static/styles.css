@@ -246,6 +246,11 @@ th {
     color: white;
 }
 
+th:nth-child(1),
+td:nth-child(1) {
+    display: none;
+    }
+
 tr:nth-child(even) {
     background-color: #F6635C;
 }
@@ -287,11 +292,6 @@ tr:nth-child(even) > td > form > button {
     th, td {
         padding: 10px;
     }
-
-    th:nth-child(4),
-    td:nth-child(4) {
-        display: none;
-        }
 
     th:nth-child(7),
     td:nth-child(7) {

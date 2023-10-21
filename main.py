@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 import pandas as pd
-import csv
 from mysql_queries import *
 
 host = 'sql12.freemysqlhosting.net'
@@ -16,23 +15,6 @@ engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{databa
 
 df = pd.read_sql(text(customer_tanker), engine)
 app = Flask(__name__)
-
-
-def handle_no_file_found():
-    try:
-        data = pd.read_csv('./logs.csv')
-    except FileNotFoundError:
-        with open("./logs.csv", 'a', newline='') as tanker_logs:
-            fieldnames = ['Name', 'Date', 'Time', 'Payment Mode', 'Payment Status', 'Amount (Rs.)', 'Note']
-            writer = csv.DictWriter(tanker_logs, fieldnames=fieldnames)
-
-            if tanker_logs.tell() == 0:
-                writer.writeheader()
-                print("No logs file found, but one is created with with give fieldnames")
-        data = pd.read_csv('./logs.csv')
-
-
-# handle_no_file_found()
 
 
 def insert_tanker_record_to_sql(data):
@@ -54,42 +36,19 @@ def insert_tanker_record_to_sql(data):
         conn.commit()
 
 
-def delete_last_entry():
-    params = {
-        'customer_id': customer_details['customer_id'].item(),
-        'date': data['Date'],
-        'time': data['Time']
-    }
-    customer_params = {
-        "id": customer_details['customer_id'].item(),
-        "amount": f"-{customer_details['unit_charge'].item()}"
-    }
+def delete_by_index(row):
     with engine.connect() as conn:
-        conn.execute(text(insert_tanker_record), parameters=params)
+        customer_details = pd.read_sql(f'SELECT * FROM customers '
+                                       f'WHERE name = "{row["Name"].item()}"', engine)
+        customer_params = {
+            "id": customer_details['customer_id'].item(),
+            "amount": f"+{customer_details['unit_charge'].item()}"
+        }
+
         conn.execute(text(update_balance), parameters=customer_params)
+        conn.execute(text(f"DELETE FROM `sql12654547`.`tanker_records` WHERE (id = {row['id'].item()});"))
         conn.commit()
-
-    logs = pd.read_csv('./logs.csv')
-    if not logs.empty:
-        logs = logs.iloc[:-1]
-        logs.to_csv("./logs.csv", index=False)
-        print("Last line deleted from the CSV file.")
-    else:
-        print("CSV file is empty.")
-
-
-def delete_by_index(index):
-    with engine.connect() as conn:
-        conn.execute(text(f"DELETE FROM `sql12654547`.`tanker_records` WHERE (`id` = '{}');"))
-        conn.commit()
-
-    logs = pd.read_csv('./logs.csv')
-    if not logs.empty:
-        logs = logs.drop(int(index))
-        logs.to_csv("./logs.csv", index=False)
-        print(f"Row with index:{index} is deleted from the CSV file.")
-    else:
-        print("CSV file is empty.")
+        print(f"Deleted row with id = {row['id'].item()} from database.")
 
 
 def data_in_range_date(data, start, end):
@@ -97,55 +56,70 @@ def data_in_range_date(data, start, end):
     end_date = datetime.strptime(end, "%Y-%m-%d")
     date_range = []
     while start_date <= end_date:
-        date_range.append(start_date.date())
+        date_range.append(start_date.date().strftime("%d-%m-%Y"))
         start_date += timedelta(days=1)
     refined = data[data['Date'].isin(date_range)]
 
     return refined
 
 
+def get_last_entry():
+    tanker_logs = pd.read_sql(text(customer_tanker), engine)
+    latest_entry = tanker_logs.tail(1)
+
+    try:
+        last_date = datetime.strptime(latest_entry["Date"].item(), "%d-%m-%Y").strftime('%Y-%m-%d')
+        last_time = datetime.strptime(latest_entry["Time"].item(), "%I:%M %p").strftime('%H:%M:%S')
+    except:
+        last_date = None
+        last_time = None
+
+    return last_date, last_time, latest_entry
+
+
 @app.route("/", methods=["GET", "POST"])
 def home():
+    df_home = pd.read_sql(text(customer_tanker), engine)
+
     if request.method == "POST":
-        if request.form.get('table-index'):
-            delete_by_index(request.form.get('table-index'))
-    data = pd.read_sql(text(customer_tanker), engine)
+        tanker_id = request.form.get('tanker_id')
+        row_to_delete = df_home[df_home['id'] == int(tanker_id)]
+        delete_by_index(row_to_delete)
+        return redirect(url_for('home'))
+
     return render_template("index.html", footer_cpr_year=current_year,
-                           data_table_bool=True, data_table=data)
+                           data_table_bool=True, data_table=df_home.iloc[::-1])
 
 
 @app.route("/entry", methods=["POST", "GET"])
 def entry_page():
-    tanker_logs = pd.read_sql(text(customer_tanker), engine)
-    try:
-        last_date = tanker_logs.tail(1)['date'].item()
-        last_time = tanker_logs.tail(1)["time"].item()
-    except:
-        last_date = None
-        last_time = None
+    last_date, last_time, latest_entry = get_last_entry()
 
     entry_status = False
 
     if request.method == "POST":
 
         if request.form.get('delete_btn') == "delete_btn":
-            delete_last_entry()
+            delete_by_index(latest_entry)
+
+            return redirect(url_for('entry_page'))
 
         elif request.form.get('submit') == "Submit":
+
             form_data = {
                 'Name': request.form['name'],
                 'Date': request.form['date'],
                 'Time': request.form['time']
             }
-            entry_status = True
             insert_tanker_record_to_sql(form_data)
 
-    tanker_logs = pd.read_sql(text(customer_tanker), engine)
-    latest_row = tanker_logs.head(1)
+            entry_status = True
+
+            last_date, last_time, latest_entry = get_last_entry()
 
     return render_template("entry.html", footer_cpr_year=current_year,
                            entry_status_content=entry_status, default_date=last_date,
-                           last_time=last_time, last_log=latest_row)
+                           default_time=last_time, last_log=latest_entry)
 
 
 @app.route("/retrieve", methods=["GET", "POST"])
@@ -210,7 +184,7 @@ def payment_entry_page():
 @app.route('/download-logs')
 def download_logs():
     df_sql = pd.read_sql(text(customer_tanker), engine)
-    df_sql.to_csv("./records.csv")
+    df_sql.to_csv("./records.csv", index=False)
     response = send_file("./records.csv", as_attachment=True)
 
     return response
