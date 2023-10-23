@@ -2,12 +2,19 @@ from datetime import datetime
 import pandas as pd
 from sqlalchemy import create_engine, text
 from mysql_queries import *
+import configparser
 
-host = 'sql12.freemysqlhosting.net'
-user = 'sql12654547'
-password = 'Nt6PqNw1Cd'
-port = 3306
-database = "sql12654547"
+config = configparser.ConfigParser()
+config.read('./config.ini')
+
+host = config.get('Database', 'host')
+port = config.get('Database', 'port')
+user = config.get('Database', 'username')
+password = config.get('Database', 'password')
+database = config.get('Database', 'database')
+
+print(host, type(host))
+print(port, user, password, database)
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/')
 df = pd.read_csv('./logs.csv')
