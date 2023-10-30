@@ -10,7 +10,7 @@ config.read('./config.ini')
 
 host = config.get('Database', 'host')
 port = config.get('Database', 'port')
-user = config.get('Database', 'user')
+user = config.get('Database', 'username')
 password = config.get('Database', 'password')
 database = config.get('Database', 'database')
 current_year = datetime.now().year
@@ -50,7 +50,7 @@ def delete_by_index(row):
         }
 
         conn.execute(text(update_balance), parameters=customer_params)
-        conn.execute(text(f"DELETE FROM `sql12654547`.`tanker_records` WHERE (id = {row['id'].item()});"))
+        conn.execute(text(f"DELETE FROM `{database}`.`tanker_records` WHERE (id = {row['id'].item()});"))
         conn.commit()
         print(f"Deleted row with id = {row['id'].item()} from database.")
 
