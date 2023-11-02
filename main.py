@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
@@ -10,7 +11,7 @@ config.read('./config.ini')
 
 host = config.get('Database', 'host')
 port = config.get('Database', 'port')
-user = config.get('Database', 'user')
+user = config.get('Database', 'username')
 password = config.get('Database', 'password')
 database = config.get('Database', 'database')
 current_year = datetime.now().year
@@ -33,7 +34,8 @@ def insert_tanker_record_to_sql(data):
         }
         customer_params = {
             "id": customer_details['customer_id'].item(),
-            "amount": f"-{customer_details['unit_charge'].item()}"
+            "amount": f"-{customer_details['unit_charge'].item()}",
+            "unit": f'+1'
         }
         conn.execute(text(insert_tanker_record), parameters=params)
         conn.execute(text(update_balance), parameters=customer_params)
@@ -46,11 +48,13 @@ def delete_by_index(row):
                                        f'WHERE name = "{row["Name"].item()}"', engine)
         customer_params = {
             "id": customer_details['customer_id'].item(),
-            "amount": f"+{customer_details['unit_charge'].item()}"
+            "amount": f"+{customer_details['unit_charge'].item()}",
+            'unit': '-1'
         }
 
+
         conn.execute(text(update_balance), parameters=customer_params)
-        conn.execute(text(f"DELETE FROM `sql12654547`.`tanker_records` WHERE (id = {row['id'].item()});"))
+        conn.execute(text(f"DELETE FROM `{database}`.`tanker_records` WHERE (id = {row['id'].item()});"))
         conn.commit()
         print(f"Deleted row with id = {row['id'].item()} from database.")
 
@@ -195,4 +199,4 @@ def download_logs():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

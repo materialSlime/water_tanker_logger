@@ -45,7 +45,7 @@ insert_payment = """
 
 update_balance = """
     UPDATE customers
-    SET balance = balance + :amount
+    SET balance = balance + :amount, total_units = total_units + :unit
     WHERE customer_id = :id;
 """
 
