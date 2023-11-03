@@ -43,7 +43,13 @@ insert_payment = """
     VALUES (:customer_id, :date, :paid_amount);
 """
 
-update_balance = """
+update_balance_only = """
+    UPDATE customers
+    SET balance = balance + :amount
+    WHERE customer_id = :id;
+"""
+
+update_balance_and_unit = """
     UPDATE customers
     SET balance = balance + :amount, total_units = total_units + :unit
     WHERE customer_id = :id;
@@ -56,3 +62,7 @@ customer_tanker = """
         ON tf.customer_id = c.customer_id
     ORDER BY tf.id ASC;
 """
+customers = '''
+    SELECT name AS Name, unit_charge AS Charge, total_units AS 'Tanker Count',balance AS Balance
+    FROM customers;
+'''

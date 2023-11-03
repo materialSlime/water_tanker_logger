@@ -38,7 +38,7 @@ def insert_tanker_record_to_sql(data):
             "unit": f'+1'
         }
         conn.execute(text(insert_tanker_record), parameters=params)
-        conn.execute(text(update_balance), parameters=customer_params)
+        conn.execute(text(update_balance_and_unit), parameters=customer_params)
         conn.commit()
 
 
@@ -52,8 +52,7 @@ def delete_by_index(row):
             'unit': '-1'
         }
 
-
-        conn.execute(text(update_balance), parameters=customer_params)
+        conn.execute(text(update_balance_and_unit), parameters=customer_params)
         conn.execute(text(f"DELETE FROM `{database}`.`tanker_records` WHERE (id = {row['id'].item()});"))
         conn.commit()
         print(f"Deleted row with id = {row['id'].item()} from database.")
@@ -96,7 +95,7 @@ def home():
         return redirect(url_for('home'))
 
     return render_template("index.html", footer_cpr_year=current_year,
-                           data_table_bool=True, data_table=df_home.iloc[::-1])
+                           visibility=['table', 'delete_column', 'footer'], data_table=df_home.iloc[::-1])
 
 
 @app.route("/entry", methods=["POST", "GET"])
@@ -132,6 +131,7 @@ def entry_page():
 
 @app.route("/retrieve", methods=["GET", "POST"])
 def retrieve_page():
+    is_balance = None
     if request.method == "POST":
         in_range = None
         c_balance = 0
@@ -151,18 +151,20 @@ def retrieve_page():
             tanker_logs = pd.read_sql(text(customer_tanker), engine)
             all_matching_names = tanker_logs[tanker_logs['Name'] == name]
             in_range = data_in_range_date(all_matching_names, start_date, end_date)
+            is_balance = 'balance'
 
             c_balance = pd.read_sql(f"SELECT balance FROM customers "
                                     f"WHERE name = '{name}'", engine)['balance'].item()
 
-        return render_template("retrieve.html", footer_cpr_year=current_year,
-                               data_table=in_range, data_table_bool=True, c_balance=c_balance)
-    return render_template("retrieve.html", footer_cpr_year=current_year,
-                           data_table=None, data_table_bool=False)
+        return render_template("retrieve.html", footer_cpr_year=current_year, data_table=in_range,
+                               c_balance=c_balance, visibility=['table', 'delete_column', 'footer', is_balance])
+    return render_template("retrieve.html", footer_cpr_year=current_year, data_table=None,
+                           visibility=[])
 
 
 @app.route("/update-pay-info", methods=["GET", "POST"])
 def payment_entry_page():
+    df = pd.read_sql(text(customers), engine)
     if request.method == 'POST':
         if request.form.get('update') == 'Update':
             cs_id = pd.read_sql(f"SELECT customer_id FROM customers "
@@ -181,12 +183,13 @@ def payment_entry_page():
 
             with engine.connect() as conn:
                 conn.execute(text(insert_payment), parameters=payment_params)
-                conn.execute(text(update_balance), parameters=customer_params)
+                conn.execute(text(update_balance_only), parameters=customer_params)
                 conn.commit()
 
             return render_template('./payment_entry.html', update_succeed=True)
     else:
-        return render_template('./payment_entry.html')
+        return render_template('./payment_entry.html', data_table=df, footer_cpr_year=current_year,
+                               visibility=['table'])
 
 
 @app.route('/download-logs')
@@ -199,4 +202,4 @@ def download_logs():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(debug=True, host="0.0.0.0", port=80)

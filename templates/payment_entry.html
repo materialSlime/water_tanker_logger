@@ -4,6 +4,15 @@
 
 {% block content %}
 
+{% include "table.html" %}
+
+<style>
+    th:nth-child(1),
+    td:nth-child(1) {
+        display: table-cell;
+    }
+</style>
+
 <h2>Payment Update Form</h2>
 <div class="content">
     <form action="{{ url_for('payment_entry_page') }}" method="POST">

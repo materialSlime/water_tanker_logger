@@ -1,5 +1,5 @@
 <div id="response" class="table">
-    {% if data_table_bool %}
+    {% if 'table' in visibility %}
         {% if not data_table.empty %}
             <h3>Here is the Query Result</h3>
             <div class="section_table">
@@ -10,7 +10,9 @@
                 {% for name in data_table.columns %}
                     <th>{{name}}</th>
                 {% endfor %}
-                    <th>Delete</th>
+                    {% if 'delete_column' in visibility %}
+                        <th>Delete</th>
+                    {% endif %}
                 </tr>
               </thead>
 
@@ -20,6 +22,7 @@
                     {% for name, value in row.items() %}
                         <td>{{value}}</td>
                     {% endfor %}
+                    {% if 'delete_column' in visibility %}
                     <td class="delete-btn_td">
                         <form class="delete-form" action="{{ url_for('home') }}" method="post">
                             <button class="delete-btn" type="submit" name="tanker_id" value="{{row['id']}}">
@@ -27,13 +30,18 @@
                             </button>
                         </form>
                     </td>
+                    {% endif %}
                 </tr>
               {% endfor %}
               </tbody>
             </table>
         </div>
-            <h4 class="tanker_total">Total Tanker Count = {{data_table.shape[0]}}</h4>
-            <h4 class="tanker_total">Total Amount to get paid for pending payments = {{c_balance}}</h4>
+            {% if 'footer' in visibility %}
+                <h4 class="tanker_total">Total Tanker Count = {{data_table.shape[0]}}</h4>
+            {% if 'balance' in visibility %}
+                <h4 class="tanker_total">Balance = {{c_balance}}</h4>
+            {% endif %}
+            {% endif %}
         {% else %}
             <h3>No Data to show.</h3>
         {% endif%}
