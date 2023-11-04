@@ -186,7 +186,8 @@ def payment_entry_page():
                 conn.execute(text(update_balance_only), parameters=customer_params)
                 conn.commit()
 
-            return render_template('./payment_entry.html', update_succeed=True)
+            return render_template('./payment_entry.html', update_succeed=True, footer_cpr_year=current_year,
+                                   visibility=['table'])
     else:
         return render_template('./payment_entry.html', data_table=df, footer_cpr_year=current_year,
                                visibility=['table'])
