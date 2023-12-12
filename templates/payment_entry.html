@@ -32,7 +32,7 @@
         <hr>
         <label for="retrieve_pay"> Get Payments:</label>
         <input id="retrieve_pay" name="retrieve" type="submit" value="By Name">
-        <input name="retrieve_pay" type="submit" value="All" formnovalidate>
+        <input name="retrieve" type="submit" value="All" formnovalidate>
     </form>
 
     {% if update_succeed == True %}
@@ -48,16 +48,6 @@
     }
 </style>
 
-<!--<div class="content">-->
-<!--    <h1>Retrieve Payments-->
-<!--    <form method="post" id="retrieveForm">-->
-<!--        <label for="name">Name:</label>-->
-<!--        <input type="text" id="name" name="name" required><br><br>-->
-
-<!--        <input class="button" name="submit" value="Submit" type="submit">-->
-<!--        <input class="payments button" formnovalidate name="all_payments" value="Retrieve All" type="submit">-->
-<!--    </form>-->
-<!--</div>-->
 
 {% include "table.html" %}
 

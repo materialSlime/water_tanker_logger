@@ -183,8 +183,7 @@ def payment_entry_page():
             return render_template('./payment_entry.html', data_table=payments_df[payments_df['Name'] == name],
                                    footer_cpr_year=current_year, visibility=['table'])
 
-        if request.form.get('retrieve') == 'All':
-            name = request.form.get('name')
+        elif request.form.get('retrieve') == 'All':
             payments_df = pd.read_sql(text(get_payments), engine)
             return render_template('./payment_entry.html', data_table=payments_df,
                                    footer_cpr_year=current_year, visibility=['table'])
