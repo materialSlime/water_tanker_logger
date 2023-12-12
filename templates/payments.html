@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %} Water Tanker-Payment List {% endblock %}
+
+{% block content %}
+
+<style>
+    th:nth-child(1),
+    td:nth-child(1) {
+        display: table-cell;
+    }
+</style>
+
+<div class="content">
+    <h1>Retrieve Payments
+    <form method="post" id="retrieveForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <input class="button" name="submit" value="Submit" type="submit">
+        <input class="payments button" formnovalidate name="all_payments" value="Retrieve All" type="submit">
+    </form>
+</div>
+
+{% include "table.html" %}
+
+{% endblock %}

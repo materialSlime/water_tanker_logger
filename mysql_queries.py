@@ -56,13 +56,32 @@ update_balance_and_unit = """
 """
 
 customer_tanker = """
+    SELECT id, name AS Name, DATE_FORMAT(date,'%d-%m-%Y') AS Date, TIME_FORMAT(time,'%h:%i %p') AS 'Time '
+    FROM tanker_records AS tf
+    JOIN customers AS c
+        ON tf.customer_id = c.customer_id
+    ORDER BY STR_TO_DATE(date, '%Y-%m-%d') DESC, time DESC
+    LIMIT 100;
+"""
+
+tanker_by_date_range = """
    SELECT id, name AS Name, DATE_FORMAT(date,'%d-%m-%Y') AS Date, TIME_FORMAT(time,'%h:%i %p') AS Time
     FROM tanker_records AS tf
     JOIN customers AS c
         ON tf.customer_id = c.customer_id
-    ORDER BY tf.id ASC;
+    WHERE date >= '{s_date}' AND date <= '{e_date}'
+    ORDER BY STR_TO_DATE(date, '%Y-%m-%d') DESC, time DESC;
 """
+
 customers = '''
     SELECT name AS Name, unit_charge AS Charge, total_units AS 'Tanker Count',balance AS Balance
     FROM customers;
+'''
+
+get_payments = '''
+    SELECT name AS Name, DATE_FORMAT(date,'%d-%m-%Y') AS Date, paid_amount AS Amount 
+    FROM payments as p
+    JOIN customers as c
+    ON p.customer_id = c.customer_id
+    ORDER BY STR_TO_DATE(date, '%Y-%m-%d') ASC;
 '''

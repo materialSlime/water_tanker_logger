@@ -1,6 +1,5 @@
-import os
 from flask import Flask, render_template, request, redirect, url_for, send_file
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy import create_engine, text
 import pandas as pd
 from mysql_queries import *
@@ -14,11 +13,11 @@ port = config.get('Database', 'port')
 user = config.get('Database', 'username')
 password = config.get('Database', 'password')
 database = config.get('Database', 'database')
+debug = bool(config.get('App', 'debug'))
 current_year = datetime.now().year
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}')
 
-df = pd.read_sql(text(customer_tanker), engine)
 app = Flask(__name__)
 
 
@@ -58,25 +57,13 @@ def delete_by_index(row):
         print(f"Deleted row with id = {row['id'].item()} from database.")
 
 
-def data_in_range_date(data, start, end):
-    start_date = datetime.strptime(start, "%Y-%m-%d")
-    end_date = datetime.strptime(end, "%Y-%m-%d")
-    date_range = []
-    while start_date <= end_date:
-        date_range.append(start_date.date().strftime("%d-%m-%Y"))
-        start_date += timedelta(days=1)
-    refined = data[data['Date'].isin(date_range)]
-
-    return refined
-
-
 def get_last_entry():
     tanker_logs = pd.read_sql(text(customer_tanker), engine)
-    latest_entry = tanker_logs.tail(1)
+    latest_entry = tanker_logs.head(1)
 
     try:
         last_date = datetime.strptime(latest_entry["Date"].item(), "%d-%m-%Y").strftime('%Y-%m-%d')
-        last_time = datetime.strptime(latest_entry["Time"].item(), "%I:%M %p").strftime('%H:%M:%S')
+        last_time = datetime.strptime(latest_entry["Time "].item(), "%I:%M %p").strftime('%H:%M:%S')
     except:
         last_date = None
         last_time = None
@@ -95,7 +82,7 @@ def home():
         return redirect(url_for('home'))
 
     return render_template("index.html", footer_cpr_year=current_year,
-                           visibility=['table', 'delete_column', 'footer'], data_table=df_home.iloc[::-1])
+                           visibility=['table', 'delete_column'], data_table=df_home)
 
 
 @app.route("/entry", methods=["POST", "GET"])
@@ -135,28 +122,30 @@ def retrieve_page():
     if request.method == "POST":
         in_range = None
         c_balance = 0
-        data = pd.read_sql(text(customer_tanker), engine)
+        name = None
+
         if request.form.get('logs_by_date') == "Retrieve by Date":
             date = request.form.get('specified-date')
-            in_range = data_in_range_date(data, date, date)
+            in_range = pd.read_sql(text(tanker_by_date_range.format(s_date=date, e_date=date)), engine)
 
         if request.form.get('logs_today') == "Retrieve Today's Log":
             today = datetime.now().strftime("%Y-%m-%d")
-            in_range = data_in_range_date(data, today, today)
+            in_range = pd.read_sql(text(tanker_by_date_range.format(s_date=today, e_date=today)), engine)
 
         elif request.form.get('submit') == "Submit":
             name = request.form['name']
             start_date = request.form['startDate']
             end_date = request.form['endDate']
-            tanker_logs = pd.read_sql(text(customer_tanker), engine)
-            all_matching_names = tanker_logs[tanker_logs['Name'] == name]
-            in_range = data_in_range_date(all_matching_names, start_date, end_date)
+
+            in_range = pd.read_sql(text(tanker_by_date_range.format(s_date=start_date, e_date=end_date)), engine)
+            print(tanker_by_date_range.format(s_date=start_date, e_date=end_date))
             is_balance = 'balance'
 
             c_balance = pd.read_sql(f"SELECT balance FROM customers "
                                     f"WHERE name = '{name}'", engine)['balance'].item()
 
-        return render_template("retrieve.html", footer_cpr_year=current_year, data_table=in_range,
+        return render_template("retrieve.html", footer_cpr_year=current_year,
+                               data_table=in_range[in_range['Name'] == name],
                                c_balance=c_balance, visibility=['table', 'delete_column', 'footer', is_balance])
     return render_template("retrieve.html", footer_cpr_year=current_year, data_table=None,
                            visibility=[])
@@ -164,7 +153,7 @@ def retrieve_page():
 
 @app.route("/update-pay-info", methods=["GET", "POST"])
 def payment_entry_page():
-    df = pd.read_sql(text(customers), engine)
+    balance_df = pd.read_sql(text(customers), engine)
     if request.method == 'POST':
         if request.form.get('update') == 'Update':
             cs_id = pd.read_sql(f"SELECT customer_id FROM customers "
@@ -186,11 +175,22 @@ def payment_entry_page():
                 conn.execute(text(update_balance_only), parameters=customer_params)
                 conn.commit()
 
-            return render_template('./payment_entry.html', update_succeed=True, footer_cpr_year=current_year,
-                                   visibility=['table'])
-    else:
-        return render_template('./payment_entry.html', data_table=df, footer_cpr_year=current_year,
-                               visibility=['table'])
+            balance_df = pd.read_sql(text(customers), engine)
+
+        if request.form.get('retrieve') == 'By Name':
+            name = request.form.get('name')
+            payments_df = pd.read_sql(text(get_payments), engine)
+            return render_template('./payment_entry.html', data_table=payments_df[payments_df['Name'] == name],
+                                   footer_cpr_year=current_year, visibility=['table'])
+
+        if request.form.get('retrieve') == 'All':
+            name = request.form.get('name')
+            payments_df = pd.read_sql(text(get_payments), engine)
+            return render_template('./payment_entry.html', data_table=payments_df,
+                                   footer_cpr_year=current_year, visibility=['table'])
+
+    return render_template('./payment_entry.html', data_table=balance_df,
+                           footer_cpr_year=current_year, visibility=['table'])
 
 
 @app.route('/download-logs')
@@ -203,4 +203,4 @@ def download_logs():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=80)
+    app.run(debug=debug, host="0.0.0.0", port=80)
