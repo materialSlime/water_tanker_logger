@@ -41,10 +41,14 @@ def insert_tanker_record_to_sql(data):
         conn.commit()
 
 
-def delete_by_index(row):
+def delete_by_index(row_id):
     with engine.connect() as conn:
+        tanker_details = pd.read_sql(f'SELECT * FROM tanker_records '
+                                     f'WHERE id = "{row_id}"', engine)
+
         customer_details = pd.read_sql(f'SELECT * FROM customers '
-                                       f'WHERE name = "{row["Name"].item()}"', engine)
+                                       f'WHERE customer_id = "{tanker_details["customer_id"].item()}"', engine)
+
         customer_params = {
             "id": customer_details['customer_id'].item(),
             "amount": f"+{customer_details['unit_charge'].item()}",
@@ -52,9 +56,9 @@ def delete_by_index(row):
         }
 
         conn.execute(text(update_balance_and_unit), parameters=customer_params)
-        conn.execute(text(f"DELETE FROM `{database}`.`tanker_records` WHERE (id = {row['id'].item()});"))
+        conn.execute(text(f"DELETE FROM `{database}`.`tanker_records` WHERE id = {row_id};"))
         conn.commit()
-        print(f"Deleted row with id = {row['id'].item()} from database.")
+        print(f"Deleted row with id = {row_id} from database.")
 
 
 def get_last_entry():
@@ -77,8 +81,7 @@ def home():
 
     if request.method == "POST":
         tanker_id = request.form.get('tanker_id')
-        row_to_delete = df_home[df_home['id'] == int(tanker_id)]
-        delete_by_index(row_to_delete)
+        delete_by_index(tanker_id)
         return redirect(url_for('home'))
 
     return render_template("index.html", footer_cpr_year=current_year,
@@ -94,8 +97,7 @@ def entry_page():
     if request.method == "POST":
 
         if request.form.get('delete_btn') == "delete_btn":
-            delete_by_index(latest_entry)
-
+            delete_by_index(latest_entry['id'].item())
             return redirect(url_for('entry_page'))
 
         elif request.form.get('submit') == "Submit":
@@ -138,14 +140,14 @@ def retrieve_page():
             end_date = request.form['endDate']
 
             in_range = pd.read_sql(text(tanker_by_date_range.format(s_date=start_date, e_date=end_date)), engine)
-            print(tanker_by_date_range.format(s_date=start_date, e_date=end_date))
+            in_range = in_range[in_range['Name'] == name]
             is_balance = 'balance'
 
             c_balance = pd.read_sql(f"SELECT balance FROM customers "
                                     f"WHERE name = '{name}'", engine)['balance'].item()
 
         return render_template("retrieve.html", footer_cpr_year=current_year,
-                               data_table=in_range[in_range['Name'] == name],
+                               data_table=in_range,
                                c_balance=c_balance, visibility=['table', 'delete_column', 'footer', is_balance])
     return render_template("retrieve.html", footer_cpr_year=current_year, data_table=None,
                            visibility=[])

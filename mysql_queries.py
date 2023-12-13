@@ -65,7 +65,7 @@ customer_tanker = """
 """
 
 tanker_by_date_range = """
-   SELECT id, name AS Name, DATE_FORMAT(date,'%d-%m-%Y') AS Date, TIME_FORMAT(time,'%h:%i %p') AS Time
+   SELECT id, name AS Name, DATE_FORMAT(date,'%d-%m-%Y') AS Date, TIME_FORMAT(time,'%h:%i %p') AS 'Time '
     FROM tanker_records AS tf
     JOIN customers AS c
         ON tf.customer_id = c.customer_id
