@@ -1,11 +1,16 @@
 FROM python:3.11.6-alpine3.18
-COPY . /root/app
-WORKDIR /root/app/
+COPY . /app/
+WORKDIR /app
 
-RUN cd /root/app
 RUN pip install --upgrade pip
 RUN pip install -r requirments.txt
-RUN pip install pymysql
 
+
+ENV MYSQL_SERVER=${MYSQL_SERVER}
+ENV MYSQL_PORT=${MYSQL_PORT:-3306}
+ENV MYSQL_USER=${MYSQL_USER}
+ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
+ENV MYSQL_DATABASE=${MYSQL_DATABASE}
+ENV DEBUG_ON=${DEBUG_ON:-False}
 
 CMD ["python","main.py"]

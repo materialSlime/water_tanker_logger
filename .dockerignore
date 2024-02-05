@@ -5,4 +5,5 @@ __pycache__
 
 #logs
 logs.csv
-records.csv
+.gitignore
+.dockerignore

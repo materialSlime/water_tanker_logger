@@ -3,17 +3,8 @@ from datetime import datetime
 from sqlalchemy import create_engine, text
 import pandas as pd
 from mysql_queries import *
-import configparser
+from env_vars import *
 
-config = configparser.ConfigParser()
-config.read('./config.ini')
-
-host = config.get('Database', 'host')
-port = config.get('Database', 'port')
-user = config.get('Database', 'username')
-password = config.get('Database', 'password')
-database = config.get('Database', 'database')
-debug = bool(config.get('App', 'debug'))
 current_year = datetime.now().year
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}')

@@ -2,19 +2,12 @@ from datetime import datetime
 import pandas as pd
 from sqlalchemy import create_engine, text
 from mysql_queries import *
-import configparser
-
-config = configparser.ConfigParser()
-config.read('./config.ini')
-
-host = config.get('Database', 'host')
-port = config.get('Database', 'port')
-user = config.get('Database', 'username')
-password = config.get('Database', 'password')
-database = config.get('Database', 'database')
+from env_vars import *
 
 print(host, type(host))
 print(port, user, password, database)
+
+current_year = datetime.now().year
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/')
 df = pd.read_csv('./logs.csv')
