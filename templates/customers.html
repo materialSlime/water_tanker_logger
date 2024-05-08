@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %} Water Tanker-Customers {% endblock %}
+
+{% block content %}
+
+<style>
+    th:nth-child(1),
+    td:nth-child(1) {
+        display: table-cell;
+    }
+</style>
+
+<h2>Add Customer/ Driver</h2>
+<div class="content">
+    <form action="{{ url_for('add_customer') }}" method="POST">
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name">
+        <br><br>
+    </form>
+
+    {% if success == True %}
+        <h2>Customer/ Driver added.</h2>
+    {% endif %}
+
+</div>
+
+<style>
+    th:nth-child(1),
+    td:nth-child(1) {
+        display: table-cell;
+    }
+</style>
+
+
+{% include "table.html" %}
+
+
+{% endblock %}
+

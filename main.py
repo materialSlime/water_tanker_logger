@@ -11,7 +11,6 @@ engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{databa
 
 app = Flask(__name__)
 
-
 def insert_tanker_record_to_sql(data):
     with engine.connect() as conn:
         customer_details = pd.read_sql(f'SELECT * FROM customers '
@@ -184,6 +183,19 @@ def payment_entry_page():
     return render_template('./payment_entry.html', data_table=balance_df,
                            footer_cpr_year=current_year, visibility=['table'])
 
+
+@app.route('/add-customer',methods=["GET","POST"])
+def add_customer():
+    success = False
+    if request.method == "POST":
+        # customers = pd.read_sql(text(customers), engine)
+        customers = "Test"
+        success = True
+        return render_template("./customers.html", data_table=customers, footer_cpr_year=current_year, 
+                                visibility=['table'], success_sts=success)
+    else:
+        return render_template("./customers.html", data_table=customers, footer_cpr_year=current_year, 
+                                visibility=['table'],  success_sts=success)
 
 @app.route('/download-logs')
 def download_logs():
