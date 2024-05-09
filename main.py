@@ -143,9 +143,8 @@ def retrieve_page():
                            visibility=[])
 
 
-@app.route("/update-pay-info", methods=["GET", "POST"])
-def payment_entry_page():
-    balance_df = pd.read_sql(text(customers), engine)
+@app.route("/manage-accounts", methods=["GET", "POST"])
+def manage_accounts():
     if request.method == 'POST':
         if request.form.get('update') == 'Update':
             cs_id = pd.read_sql(f"SELECT customer_id FROM customers "
@@ -154,7 +153,6 @@ def payment_entry_page():
                 "customer_id": cs_id,
                 "date": datetime.now().date(),
                 "paid_amount": request.form.get('paid_amount')
-                # "mode" : request.form.get('payment_mode')
             }
 
             customer_params = {
@@ -169,33 +167,34 @@ def payment_entry_page():
 
             balance_df = pd.read_sql(text(customers), engine)
 
-        if request.form.get('retrieve') == 'By Name':
+        elif request.form.get('retrieve') == 'By Name':
             name = request.form.get('name')
             payments_df = pd.read_sql(text(get_payments), engine)
-            return render_template('./payment_entry.html', data_table=payments_df[payments_df['Name'] == name],
+            return render_template('./manage_accounts.html', data_table=payments_df[payments_df['Name'] == name],
                                    footer_cpr_year=current_year, visibility=['table'])
 
         elif request.form.get('retrieve') == 'All':
             payments_df = pd.read_sql(text(get_payments), engine)
-            return render_template('./payment_entry.html', data_table=payments_df,
+            return render_template('./manage_accounts.html', data_table=payments_df,
                                    footer_cpr_year=current_year, visibility=['table'])
 
-    return render_template('./payment_entry.html', data_table=balance_df,
+        elif request.form.get('add-account') == 'Add':
+            charge = request.form.get('charge')
+            username = request.form.get('account-name')
+            account_params = {
+                "name": username,
+                "total_units": 0,
+                "unit_charge": charge,
+                "balance": 0
+            }
+            with engine.connect() as conn:
+                conn.execute(text(insert_customer), parameters=account_params)
+                conn.commit()
+
+    balance_df = pd.read_sql(text(customers), engine)
+    return render_template('./manage_accounts.html', data_table=balance_df,
                            footer_cpr_year=current_year, visibility=['table'])
 
-
-@app.route('/add-customer',methods=["GET","POST"])
-def add_customer():
-    success = False
-    if request.method == "POST":
-        # customers = pd.read_sql(text(customers), engine)
-        customers = "Test"
-        success = True
-        return render_template("./customers.html", data_table=customers, footer_cpr_year=current_year, 
-                                visibility=['table'], success_sts=success)
-    else:
-        return render_template("./customers.html", data_table=customers, footer_cpr_year=current_year, 
-                                visibility=['table'],  success_sts=success)
 
 @app.route('/download-logs')
 def download_logs():

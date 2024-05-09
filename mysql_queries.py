@@ -85,3 +85,4 @@ get_payments = '''
     ON p.customer_id = c.customer_id
     ORDER BY STR_TO_DATE(date, '%Y-%m-%d') ASC;
 '''
+

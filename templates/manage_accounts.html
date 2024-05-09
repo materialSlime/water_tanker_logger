@@ -13,7 +13,7 @@
 
 <h2>Payment Update Form</h2>
 <div class="content">
-    <form action="{{ url_for('payment_entry_page') }}" method="POST">
+    <form action="{{ url_for('manage_accounts') }}" method="POST">
 
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required list="regular_customers">
@@ -26,17 +26,31 @@
 
         <label for="amount">Amount (Rs.):</label>
         <input type="number" id="amount" name="paid_amount" step="1" value='0'><br><br>
-
-
         <input name="update" type="submit" value="Update">
+
+        <br><br><br>
         <hr>
+
         <label for="retrieve_pay"> Get Payments:</label>
         <input id="retrieve_pay" name="retrieve" type="submit" value="By Name">
         <input name="retrieve" type="submit" value="All" formnovalidate>
     </form>
 
+    <br><br><br>
+    <hr>
+
+    <h2> Create new account:</h2>
+    <br>
+    <form action="{{ url_for('manage_accounts') }}" method="post">
+        <label for="new-account">Username:</label>
+        <input type="text" id="account-name" name="account-name" required>
+        <label for="charge">Charge:</label>
+        <input type="text" id="charge" name="charge" required>
+        <input name="add-account" type="submit" value="Add">
+    </form>
+
     {% if update_succeed == True %}
-        <h2>Payment Recorded in updated logs.</h2>
+    <h2>Payment Recorded in updated logs.</h2>
     {% endif %}
 
 </div>
@@ -53,4 +67,3 @@
 
 
 {% endblock %}
-
